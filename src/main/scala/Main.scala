@@ -1,7 +1,17 @@
 import traverser.*
 
-@main def hello(): Unit =
-  println("Hello world!")
-  println(msg)
+import java.nio.file.Path
+import org.eclipse.lsp4j.*
 
-def msg = "I was compiled by Scala 3. :)"
+@main def main() = {
+	val traverser = Traverser()
+
+	val twirlPath = Util.getBaseDirectory
+											.resolve("in")
+											.resolve("Twirl.scala.html")
+											.toString
+
+	val params 		= SemanticTokensParams(TextDocumentIdentifier(twirlPath))
+
+	traverser.getTwirlTemplateSemanticTokens(params)
+}

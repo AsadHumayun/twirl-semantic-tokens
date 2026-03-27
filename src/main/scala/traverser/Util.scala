@@ -1,7 +1,7 @@
 package traverser
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Paths, Files}
+import java.nio.file.{Paths, Path, Files}
 
 object Util {
 	/** This utility method will write output to the specified destination
@@ -13,4 +13,6 @@ object Util {
 	def writeFile(path: String, content: String) = {
 		Files.write(Paths.get(path), (content + "\n\r").getBytes(StandardCharsets.UTF_8))
 	}
+
+	def getBaseDirectory: Path = Path.of(System.getProperty("user.dir"))
 }

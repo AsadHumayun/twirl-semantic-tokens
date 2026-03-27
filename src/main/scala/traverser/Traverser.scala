@@ -1,6 +1,7 @@
 package traverser
 
 import org.eclipse.lsp4j.*
+import java.nio.file.Path
 
 /**
  * @author Asad Humayun
@@ -15,6 +16,17 @@ import org.eclipse.lsp4j.*
  *
  */
 class Traverser {
+	private object Paths {
+		val successCase = Util.getBaseDirectory
+													.resolve("out")
+													.resolve("TwirlSuccessCase.txt")
+													.toString
+
+		val errorCase = Util.getBaseDirectory
+												.resolve("out")
+												.resolve("TwirlErrorCase.txt")
+												.toString
+	}
 
 	/**
 	 * Opens a file and extracts its contents to be
@@ -27,6 +39,8 @@ class Traverser {
 		import java.io.File
 		import java.net.URI
 		import scala.io.Source
+
+		println(s"[openFile] Attempting to read file [$path]")
 
 		// TODO: This doesn't feel like a very robust implementation...
 		Source.fromFile(new File(URI.create(path))).mkString("")
@@ -84,7 +98,7 @@ class Traverser {
 
 		parser.parse(content) match {
 			case Success(template, input) =>
-				TwirlOutput(template, input, Option.empty).write("../../out/TwirlSuccessCase.txt")
+				TwirlOutput(template, input, Option.empty).write("../../out/")
 			case Error(template, input, errors) =>
 				TwirlOutput(template, input, Option(errors)).write("../../out/TwirlErrorCase.txt")
 		}

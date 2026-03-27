@@ -33,3 +33,4 @@ metals.sbt
 
 # Script output etc
 out
+in

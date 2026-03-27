@@ -20,12 +20,10 @@ class Traverser {
 		val successCase = Util.getBaseDirectory
 													.resolve("out")
 													.resolve("TwirlSuccessCase.txt")
-													.toString
 
 		val errorCase = Util.getBaseDirectory
 												.resolve("out")
 												.resolve("TwirlErrorCase.txt")
-												.toString
 	}
 
 	/**
@@ -43,7 +41,7 @@ class Traverser {
 		println(s"[openFile] Attempting to read file [$path]")
 
 		// TODO: This doesn't feel like a very robust implementation...
-		Source.fromFile(new File(URI.create(path))).mkString("")
+		Source.fromFile(new File(path)).mkString("")
 	}
 
 	def getTwirlTemplateSemanticTokens(params: SemanticTokensParams) = {
@@ -96,11 +94,21 @@ class Traverser {
 		 *
 		 */
 
+		println(s"[getTwirl] Attempting to parse Twirl template source...")
+
+		/**
+		  * TODO: Make it so that when printed, the case class will also show
+			* the keys associated with each value, eg input=[...] and so on for
+			* clarity and assisstance of debugging.
+		  */
+
 		parser.parse(content) match {
 			case Success(template, input) =>
-				TwirlOutput(template, input, Option.empty).write("../../out/")
+				println(s"[getTwirl] Successfully parsed")
+				TwirlOutput(template, input, Option.empty).write(Paths.successCase.toString)
 			case Error(template, input, errors) =>
-				TwirlOutput(template, input, Option(errors)).write("../../out/TwirlErrorCase.txt")
+				println(s"[getTwirl] Error parsing template")
+				TwirlOutput(template, input, Option(errors)).write(Paths.errorCase.toString)
 		}
 	}
 }

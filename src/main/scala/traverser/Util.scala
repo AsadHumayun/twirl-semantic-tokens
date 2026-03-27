@@ -11,6 +11,7 @@ object Util {
 	  * @param content    The content to write
 	  */
 	def writeFile(path: String, content: String) = {
+		println(s"[writFile] Attempting to write file [$path]")
 		Files.write(Paths.get(path), (content + "\n\r").getBytes(StandardCharsets.UTF_8))
 	}
 

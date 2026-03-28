@@ -15,5 +15,6 @@ object Util {
 		Files.write(Paths.get(path), (content + "\n\r").getBytes(StandardCharsets.UTF_8))
 	}
 
+	/**Returns the base directory for this project (`user.dir`) */
 	def getBaseDirectory: Path = Path.of(System.getProperty("user.dir"))
 }

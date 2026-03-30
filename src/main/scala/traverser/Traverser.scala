@@ -59,23 +59,23 @@ class Traverser {
 			val errors	: Option[List[TreeNodes.PosString]]
 		) {
 			override def toString(): String = s"""
-  	|	Template output:
-  	|	${Util.caseClassToString(template)}
-  	|	--- END TEMPLATE ---
+  	|Template output:
+  	|${Util.caseClassToString(template)}
+  	|--- END TEMPLATE ---
 		|
-  	|	Input:
-  	|	${Util.caseClassToString(input)}
-  	|	--- END INPUT ---
+  	|Input:
+  	|${Util.caseClassToString(input)}
+  	|--- END INPUT ---
 		|
-		|	Errors:
-		|	${errors.getOrElse("No errors received.")}
-		|	--- END ERRORS ---
+		|Errors:
+		|${errors.getOrElse("No errors received.")}
+		|--- END ERRORS ---
 			""".stripMargin
 
 			def write(file: String) = {
 				Util.writeFile(file, s"""
-				| [TWIRL TEMPLATE PARSER RESULT]
-				| ${this.toString}
+				|[TWIRL TEMPLATE PARSER RESULT]
+				|${this.toString}
 				""".stripMargin)
 			}
 		}

@@ -2,6 +2,7 @@ package traverser
 
 import org.eclipse.lsp4j.*
 import java.nio.file.Path
+import play.twirl.parser.TreeNodes.*
 
 /**
  * @author Asad Humayun
@@ -42,6 +43,44 @@ class Traverser {
 
 		// TODO: This doesn't feel like a very robust implementation...
 		Source.fromFile(new File(path)).mkString("")
+	}
+
+	def provideSemanticTokens(tree: scala.collection.Seq[TemplateTree]) = {
+
+		/**
+		  * A case class designed to make it easier to make it easier to construct
+			* and convert semantic tokens to/from their raw representation that is
+			* expected by LSP.
+		  *
+		  * @param deltaLine 			token line number, relative to the start of the previous token
+		  * @param deltaStart			token start character, relative to the start of the previous
+			* 											token (relative to `0` or the previous token’s start if they are on the same line)
+		  * @param length					length of the token
+		  * @param tokenType			will be looked up in `SemanticTokensLegend.tokenTypes`. We currently ask that
+			* 											`tokenType` < `65536`.
+		  * @param tokenModifiers each set bit will be looked up in `SemanticTokensLegend.tokenModifiers`
+		  */
+		case class TwirlSemanticToken(
+			val deltaLine				: Int,
+			val deltaStart			: Int,
+			val length					: Int,
+			val tokenType				: Int,
+			val tokenModifiers	: Int
+		) {
+			def toList: List[Int] = List(deltaLine, deltaStart, length, tokenType, tokenModifiers)
+		}
+
+		tree map {
+			case Comment(msg)				=>
+
+			case Display(exp)				=>
+
+			case Plain(text) 				=>
+
+			case Reassignment(ref)  =>
+
+			case ScalaExp(parts) 		=>
+		}
 	}
 
 	def getTwirlTemplateSemanticTokens(params: SemanticTokensParams) = {
@@ -104,7 +143,7 @@ class Traverser {
 
 		parser.parse(content) match {
 			case Success(template, input) =>
-				println(s"[getTwirl] Successfully parsed")
+				provideSemanticTokens(template.content)
 				TwirlOutput(template, input, Option.empty).write(Paths.successCase.toString)
 			case Error(template, input, errors) =>
 				println(s"[getTwirl] Error parsing template")

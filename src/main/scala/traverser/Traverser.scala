@@ -3,6 +3,7 @@ package traverser
 import org.eclipse.lsp4j.*
 import java.nio.file.Path
 import play.twirl.parser.TreeNodes.*
+import javax.swing.tree.MutableTreeNode
 
 /**
  * @author Asad Humayun
@@ -33,6 +34,8 @@ class Traverser {
 	 *
 	 * The resultant AST will then be traversed and
 	 * SemanticTokens will be sent to the extension.
+	 * 
+	 * [REMOVE WHEN SUBMITTING PR]
 	 */
 	private def openFile(path: String): String = {
 		import java.io.File
@@ -70,16 +73,19 @@ class Traverser {
 			def toList: List[Int] = List(deltaLine, deltaStart, length, tokenType, tokenModifiers)
 		}
 
-		tree map {
-			case Comment(msg)				=>
-
-			case Display(exp)				=>
-
-			case Plain(text) 				=>
-
-			case Reassignment(ref)  =>
-
-			case ScalaExp(parts) 		=>
+		def getLength(token: TemplateTree): Int = {
+			token match {
+				case Comment(msg)				=> msg.length
+				case Display(exp)				=> exp.parts.length
+				case Plain(text) 				=> text.length
+				case Reassignment(ref)  =>
+					ref match {
+						case Left(subTemplate: SubTemplate) => 
+							
+						case Right(var_: Var) => 
+					}
+				case ScalaExp(parts) 		=>
+			}
 		}
 	}
 

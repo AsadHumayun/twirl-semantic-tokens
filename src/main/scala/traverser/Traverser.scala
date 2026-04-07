@@ -47,8 +47,7 @@ class Traverser {
     Source.fromFile(new File(path)).mkString("")
   }
 
-  def provideSemanticTokens(tree: scala.collection.Seq[TemplateTree]) = {
-
+  def matchTree(tree: TemplateTree) = {
     /** A case class designed to make it easier to make it easier to construct and convert semantic
       * tokens to/from their raw representation that is expected by LSP.
       *
@@ -83,6 +82,15 @@ class Traverser {
       }
     }
 
+  }
+
+  def provideSemanticTokens(trees: scala.collection.Seq[TemplateTree]) = {
+    // Not too sure as to what we should do here - maybe just iterate over the tree?
+    // Not sure how I should be sending these back to the LS.
+
+    trees map {
+      tree => this.matchTree(tree)
+    }
   }
 
   def getTwirlTemplateSemanticTokens(params: SemanticTokensParams) = {

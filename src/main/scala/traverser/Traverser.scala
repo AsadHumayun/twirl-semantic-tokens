@@ -66,27 +66,23 @@ class Traverser {
       *   each set bit will be looked up in `SemanticTokensLegend.tokenModifiers`
       */
     case class TwirlSemanticToken(
-      val deltaLine: Int,
-      val deltaStart: Int,
-      val length: Int,
-      val tokenType: Int,
+      val deltaLine     : Int,
+      val deltaStart    : Int,
+      val length        : Int,
+      val tokenType     : Int,
       val tokenModifiers: Int,
     ) {
       def toList: List[Int] = List(deltaLine, deltaStart, length, tokenType, tokenModifiers)
     }
 
-    def getLength(token: TemplateTree): Int =
+    def getLength(token: Comment | Display | Plain): Int = {
       token match {
-        case Comment(msg)      => msg.length
-        case Display(exp)      => exp.parts.length
-        case Plain(text)       => text.length
-        case Reassignment(ref) =>
-          ref match {
-            case Left(subTemplate: SubTemplate) => ???
-            case Right(var_)                    => ???
-          }
-        case ScalaExp(parts)   => ???
+        case Comment(msg)  => msg.length
+        case Display(exp)  => exp.parts.length
+        case Plain(text)   => text.length
       }
+    }
+
   }
 
   def getTwirlTemplateSemanticTokens(params: SemanticTokensParams) = {

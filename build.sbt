@@ -10,7 +10,7 @@ lazy val root = project
     scalaVersion := scala3Version,
 
     libraryDependencies ++= List(
-			"org.playframework.twirl" %% "twirl-parser" 			% "2.1.0-M8",			
+			"org.playframework.twirl" %% "twirl-parser" 			% "2.1.0-M8",
 			"org.eclipse.lsp4j"				 % "org.eclipse.lsp4j"  % "1.0.0"
 		)
   )

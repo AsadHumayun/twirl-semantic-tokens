@@ -56,9 +56,11 @@ class Traverser {
     *   All of the collected semantic tokens thus far
     */
   case class State(
-    val prevPos: Position,
-    val tokens: Seq[TwirlSemanticToken],
-  )
+    val prevToken: TwirlSemanticToken,
+    val tokens   : Seq[TwirlSemanticToken],
+  ) {
+    def getPrevPos: Position = prevToken.toPos
+  }
 
   /** A case class designed to make it easier to make it easier to construct and convert semantic
     * tokens to/from their raw representation that is expected by LSP.
@@ -77,10 +79,10 @@ class Traverser {
     *   each set bit will be looked up in `SemanticTokensLegend.tokenModifiers`
     */
   case class TwirlSemanticToken(
-    val deltaLine: Int,
-    val deltaStart: Int,
-    val length: Int,
-    val tokenType: Int,
+    val deltaLine     : Int,
+    val deltaStart    : Int,
+    val length        : Int,
+    val tokenType     : Int,
     val tokenModifiers: Int,
   ) {
     def toList: List[Int] = List(deltaLine, deltaStart, length, tokenType, tokenModifiers)
@@ -100,42 +102,44 @@ class Traverser {
     val column: Int,
   )
 
-  def traverseReassignment()
+  def traverseReassignment() = {}
 
-  def matchNode(node: TemplateTree, prevToken: TwirlSemanticToken): TwirlSemanticToken = {
+  def matchNode(node: TemplateTree, state: State): State = {
     def getDeltaPos(curr: Position, prev: Position): Position =
       Position(
         line = curr.line - prev.line,
         column = curr.column - prev.column,
       )
 
+    /** I tried to get this into its own function or suchlike, but I was unable to, since in
+      * order to extract the `pos`, I need to extract the types using the pattern matching
+      * extractors.
+      *
+      * Maybe I could do something like this by just manually supplying the `pos` attrs as a
+      * property in the function, but I have not tried this yet in the spike here. Actually now
+      * that I think abuot it, if I manually make things that rely on `pos` and then have them
+      * passed to a function, then it's only really going to have one line in the resulting
+      * function which I'm not sure about the value of having a function for something.... that
+      * small. (i.e. just making a case class)
+      *
+      * The @ symbol makes it so that the whole object/class is extracted from the pattern
+      * match, as opposed to just the string (since we need to get access to its other
+      * attrs/props).
+      *
+      * Also not sure as to how I'm going to be able to map over the list and keep doing it
+      * "over" the previous item if you get me. I'm sure that something like `fold` or something
+      * will be able to accomodate this.
+      */
+
     node match {
       case comment @ Comment(msg)       =>
-        /** I tried to get this into its own function or suchlike, but I was unable to, since in
-          * order to extract the `pos`, I need to extract the types using the pattern matching
-          * extractors.
-          *
-          * Maybe I could do something like this by just manually supplying the `pos` attrs as a
-          * property in the function, but I have not tried this yet in the spike here. Actually now
-          * that I think abuot it, if I manually make things that rely on `pos` and then have them
-          * passed to a function, then it's only really going to have one line in the resulting
-          * function which I'm not sure about the value of having a function for something.... that
-          * small. (i.e. just making a case class)
-          *
-          * The @ symbol makes it so that the whole object/class is extracted from the pattern
-          * match, as opposed to just the string (since we need to get access to its other
-          * attrs/props).
-          *
-          * Also not sure as to how I'm going to be able to map over the list and keep doing it
-          * "over" the previous item if you get me. I'm sure that something like `fold` or something
-          * will be able to accomodate this.
-          */
+        val pos   = Position(comment.pos.line, comment.pos.column)
         val delta = getDeltaPos(
-          curr = Position(comment.pos.line, comment.pos.column),
-          prev = prevToken.toPos,
+          curr = pos,
+          prev = state.getPrevPos
         )
 
-        TwirlSemanticToken(
+        val thisToken = TwirlSemanticToken(
           deltaLine = delta.line,
           deltaStart = delta.column,
           length = msg.length,
@@ -144,6 +148,14 @@ class Traverser {
           tokenType = 1,
           tokenModifiers = 111,
         )
+
+        val tokens = state.tokens.appended(thisToken)
+
+        State(
+          prevToken = thisToken,
+          tokens,
+        )
+
       case display @ Display(exp)       =>
         // Scala source
         val delta = getDeltaPos(

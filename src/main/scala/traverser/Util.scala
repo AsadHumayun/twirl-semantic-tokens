@@ -41,10 +41,10 @@ object Util {
       a + (f.getName -> f.get(c))
     }
 
-    fields map {
+    fields.map {
       case (k, v) =>
         s"$k=[$v]"
-    } mkString "\n\r"
+    }.mkString("\n\r")
   }
 
 }

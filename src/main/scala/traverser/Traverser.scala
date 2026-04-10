@@ -56,8 +56,8 @@ class Traverser {
     *   All of the collected semantic tokens thus far
     */
   case class State(
-    val prevToken: TwirlSemanticToken,
-    val tokens   : Seq[TwirlSemanticToken],
+    prevToken: TwirlSemanticToken,
+    tokens   : Seq[TwirlSemanticToken],
   ) {
     def getPrevPos: Position = prevToken.toPos
   }
@@ -79,11 +79,11 @@ class Traverser {
     *   each set bit will be looked up in `SemanticTokensLegend.tokenModifiers`
     */
   case class TwirlSemanticToken(
-    val deltaLine     : Int,
-    val deltaStart    : Int,
-    val length        : Int,
-    val tokenType     : Int,
-    val tokenModifiers: Int,
+    deltaLine     : Int,
+    deltaStart    : Int,
+    length        : Int,
+    tokenType     : Int,
+    tokenModifiers: Int,
   ) {
     def toList: List[Int] = List(deltaLine, deltaStart, length, tokenType, tokenModifiers)
     def toPos: Position   = Position(deltaLine, deltaStart)
@@ -98,8 +98,8 @@ class Traverser {
     *   The column number of the token
     */
   case class Position(
-    val line: Int,
-    val column: Int,
+    line: Int,
+    column: Int,
   )
 
   def traverseReassignment() = {}
@@ -128,7 +128,7 @@ class Traverser {
       *
       * Also not sure as to how I'm going to be able to map over the list and keep doing it
       * "over" the previous item if you get me. I'm sure that something like `fold` or something
-      * will be able to accomodate this.
+      * will be able to accommodate this.
       */
 
     node match {
@@ -237,9 +237,9 @@ class Traverser {
     val Error    = parser.Error
 
     case class TwirlOutput(
-      val template: TreeNodes.Template,
-      val input: parser.Input,
-      val errors: Option[List[TreeNodes.PosString]],
+      template: TreeNodes.Template,
+      input: parser.Input,
+      errors: Option[List[TreeNodes.PosString]],
     ) {
       override def toString(): String = s"""
                                            |Template output:

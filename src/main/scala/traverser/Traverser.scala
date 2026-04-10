@@ -1,9 +1,23 @@
 package traverser
 
-import org.eclipse.lsp4j.*
+import traverser.{Position, State, TwirlSemanticToken}
+import traverser.Emitter.*
+
+import org.eclipse.lsp4j.{SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensParams}
 import java.nio.file.Path
 import play.twirl.parser.TreeNodes.*
-import javax.swing.tree.MutableTreeNode
+
+object Paths {
+  val successCase: Path = Util
+    .getBaseDirectory
+    .resolve("out")
+    .resolve("TwirlSuccessCase.txt")
+
+  val errorCase: Path = Util
+    .getBaseDirectory
+    .resolve("out")
+    .resolve("TwirlErrorCase.txt")
+}
 
 /** @author
   *   Asad Humayun
@@ -15,21 +29,6 @@ import javax.swing.tree.MutableTreeNode
   * TS implementation of this solution.
   */
 class Traverser {
-
-  private object Paths {
-
-    val successCase: Path = Util
-      .getBaseDirectory
-      .resolve("out")
-      .resolve("TwirlSuccessCase.txt")
-
-    val errorCase: Path = Util
-      .getBaseDirectory
-      .resolve("out")
-      .resolve("TwirlErrorCase.txt")
-
-  }
-
   /** Opens a file and extracts its contents to be parsed by `TwirlParser`.
     *
     * The resultant AST will then be traversed and SemanticTokens will be sent to the extension.
@@ -47,69 +46,77 @@ class Traverser {
     Source.fromFile(new File(path)).mkString("")
   }
 
-  /** The idea is that this class will hold the state for the recursive logic when it comes to
-    * "jumping" between the ASTs.
+  /** This method's purpose is to traverse and identify the Twirl template's metadata.
     *
-    * @param prevToken
-    *   The previous `TwirlSemanticToken`
-    * @param tokens
-    *   All of the collected semantic tokens thus far
+    * @param state
+    * @param template
+    * @param pos
+    * @return
     */
-  case class State(
-    prevToken: TwirlSemanticToken,
-    tokens: Seq[TwirlSemanticToken],
-  ) {
-    def getPrevPos: Position = prevToken.toPos
-  }
+  def matchTemplate(state: State, template: BaseTemplate, pos: Position): State =
+    template match
+      case BlockTemplate(imports, members, sub, nodes)                                      =>
+        val theseTokens = List()
 
-  /** A case class designed to make it easier to make it easier to construct and convert semantic
-    * tokens to/from their raw representation that is expected by LSP.
-    *
-    * @param deltaLine
-    *   token line number, relative to the start of the previous token
-    * @param deltaStart
-    *   token start character, relative to the start of the previous token (relative to `0` or the
-    *   previous token’s start if they are on the same line)
-    * @param length
-    *   length of the token
-    * @param tokenType
-    *   will be looked up in `SemanticTokensLegend.tokenTypes`. We currently ask that `tokenType` <
-    *   `65536`.
-    * @param tokenModifiers
-    *   each set bit will be looked up in `SemanticTokensLegend.tokenModifiers`
-    */
-  case class TwirlSemanticToken(
-    deltaLine: Int,
-    deltaStart: Int,
-    length: Int,
-    tokenType: Int,
-    tokenModifiers: Int,
-  ) {
-    def toList: List[Int] = List(deltaLine, deltaStart, length, tokenType, tokenModifiers)
-    def toPos: Position   = Position(deltaLine, deltaStart)
-  }
-
-  /** This class stores delta information for a token. This contains the raw position of these
-    * tokens and not the relative delta tokens that are expected by the LSP (i.e. VSCode)
-    *
-    * @param line
-    *   The line number of the token
-    * @param column
-    *   The column number of the token
-    */
-  case class Position(
-    line: Int,
-    column: Int,
-  )
-
-  def traverseReassignment() = {}
+        ???
+      case SubTemplate(declaration, name, params, imports, members, sub, nodes)             => ???
+      case Template(constructor, comment, params, topImports, imports, members, sub, nodes) => ???
 
   def matchNode(node: TemplateTree, state: State): State = {
-    def getDeltaPos(curr: Position, prev: Position): Position =
-      Position(
-        line = curr.line - prev.line,
-        column = curr.column - prev.column,
-      )
+
+    /** The below is a pseudocode-esque function that indicates that we now have basic scala source,
+      * and can delegate the generation of tokens to existing infrastructure present in Metals. Take
+      * the tokens from there, bring them in, then spit them out in the Twirl function. This might
+      * require some restructuring on Metals' codebase when I try and add it ---- depends on what
+      * things look like on their code's side when I try and get an merge-able branch set up.
+      */
+    def fetchSemanticTokensFromMetalsLS = ???
+
+    def traverseReassignment(state: State, ref: Either[SubTemplate, Var]): State =
+      ref match
+        case Left(template) =>
+          provideSemanticTokens(template, template.content)
+        case Right(var_)    => 
+          emitScala(
+            state, pos = Position(
+              line = var_.pos.line, column = var_.pos.column,
+            ), 
+            str,
+          )
+
+          // emitScala(
+          //   state, Position(
+          //     line = var_.pos.line, column = var_.pos.column
+          //   ),
+          //   var_.
+          // )
+
+    def traverseScalaExp(state: State, scalaExp: ScalaExp): State =
+      ???
+    def traverseBlock(state: State, block: Block): State          = {
+      val theseTokens = List()
+      // matchTemplate on the template's meta info
+      // matchNode on the template's tree
+      ???
+    }
+
+    def traverseScalaExpPart(state: State, part: ScalaExpPart): State =
+      part match
+        case simple @ Simple(code)                     =>
+          /** Hand off to the Scala Metals implementation of semantic tokens for this, capture the
+            * resultant tokens and then emit them.
+            *
+            * Not sure how to go about mimicing that kind of behaviour for this now - I think we
+            * will just manually write it as something here.
+            *
+            * @TODO
+            */
+
+          // pseudocode-like method showing what should be done here AS OPPOSED
+          // to doing what I currently am, and resolving the whole thing to a singple token.
+          fetchSemanticTokensFromMetalsLS
+        case block @ Block(whitespace, args, template) =>
+          traverseBlock(state, block)
 
     /** I tried to get this into its own function or suchlike, but I was unable to, since in order
       * to extract the `pos`, I need to extract the types using the pattern matching extractors.
@@ -131,90 +138,30 @@ class Traverser {
 
     node match {
       case comment @ Comment(msg)       =>
-        val pos   = Position(comment.pos.line, comment.pos.column)
-        val delta = getDeltaPos(
-          curr = pos,
-          prev = state.getPrevPos
-        )
-
-        val thisToken = TwirlSemanticToken(
-          deltaLine = delta.line,
-          deltaStart = delta.column,
-          length = msg.length,
-          // TODO: Actually understand what `tokenType` and `tokenModifiers`
-          // are expected to be by LSP and what they should be/represent.
-          tokenType = 1,
-          tokenModifiers = 111,
-        )
-
-        val tokens = state.tokens.appended(thisToken)
-
-        State(
-          prevToken = thisToken,
-          tokens,
-        )
-
-      case display @ Display(exp)       =>
-        // Scala source
-        val delta = getDeltaPos(
-          curr = Position(display.pos.line, display.pos.column),
-          prev = prevToken.toPos,
-        )
-
-        TwirlSemanticToken(
-          deltaLine = delta.line,
-          deltaStart = delta.column,
-          length = exp.parts.length,
-          // ======================
-          // Still need to actually figure out and fix this part
-          // ======================
-          tokenType = 1,
-          tokenModifiers = 111,
+        emitComment(
+          state,
+          pos = Position(comment.pos.line, comment.pos.column),
+          str = msg,
+          tokenType = SemanticTokenTypes.Comment,
+          tokenModifier = SemanticTokenModifiers.Documentation,
         )
       case plain @ Plain(text)          =>
-        val delta = getDeltaPos(
-          curr = Position(plain.pos.line, plain.pos.column),
-          prev = prevToken.toPos,
+        emitHtml(
+          state,
+          pos = Position(
+            line = plain.pos.line,
+            column = plain.pos.column,
+          ),
+          str = text,
+          // TODO: Hand this off to an HTML parser instead?
+          tokenType = SemanticTokenTypes.Label,
+          tokenModifier = SemanticTokenModifiers.Abstract,
         )
-
-        TwirlSemanticToken(
-          deltaLine = delta.line,
-          deltaStart = delta.column,
-          length = text.length,
-          // ======================
-          // Still need to actually figure out and fix this part
-          // ======================
-          tokenType = 1,
-          tokenModifiers = 111,
-        )
-      case reassign @ Reassignment(ref) =>
-        /** I don't really know how to go about recuring like this... */
-        // New plan: make a different function to traverse the Reassignment side,
-        // and just get it to pass around state
-        ???
-      case simpleCode @ Simple(code)    =>
-        // Triggered by ScapaExpPart...
-        val delta = getDeltaPos(
-          curr = Position(simpleCode.pos.line, simpleCode.pos.column),
-          prev = prevToken.toPos,
-        )
-
-        TwirlSemanticToken(
-          deltaLine = delta.line,
-          deltaStart = delta.column,
-          length = code.length,
-          // ======================
-          // Still need to actually figure out and fix this part
-          // ======================
-          tokenType = 1,
-          tokenModifiers = 111,
-        )
-
-      // case blockCode  @ Block(whitespace, args, contents)        =>
-
-      case scalaExp @ ScalaExp(parts) =>
-        parts.map()
-      case _: TemplateTree            => ???
+      case display @ Display(exp)       => traverseScalaExp(state, exp)
+      case reassign @ Reassignment(ref) => traverseReassignment(state, ref)
+      // for scalaExp, foldLeft onto it
+      case scalaExp @ ScalaExp(parts)   => ???
+      case _: TemplateTree              => ???
     }
   }
 
@@ -222,8 +169,10 @@ class Traverser {
     *
     * Use foldLeft for the folding
     */
-  def provideSemanticTokens(nodes: scala.collection.Seq[TemplateTree]) =
-    nodes
+  def provideSemanticTokens(template: BaseTemplate, nodes: scala.collection.Seq[TemplateTree]) =
+    // note to self: also needs to call matchTemplate on this template...
+    // also initialise state? no this should be done before this and state passed in
+    ???
 
   def getTwirlTemplateSemanticTokens(params: SemanticTokensParams) = {
     import play.twirl.parser.{ TreeNodes, TwirlParser }
@@ -276,10 +225,10 @@ class Traverser {
 
     parser.parse(content) match {
       case Success(template, input)       =>
-        provideSemanticTokens(template.content)
+        // provideSemanticTokens(template, template.content)
         TwirlOutput(template, input, Option.empty).write(Paths.successCase.toString)
       case Error(template, input, errors) =>
-        println(s"[getTwirl] Error parsing template")
+        println(s"[getTwirl] Errors parsing template")
         TwirlOutput(template, input, Option(errors)).write(Paths.errorCase.toString)
     }
   }

@@ -57,7 +57,7 @@ class Traverser {
     */
   case class State(
     prevToken: TwirlSemanticToken,
-    tokens   : Seq[TwirlSemanticToken],
+    tokens: Seq[TwirlSemanticToken],
   ) {
     def getPrevPos: Position = prevToken.toPos
   }
@@ -79,10 +79,10 @@ class Traverser {
     *   each set bit will be looked up in `SemanticTokensLegend.tokenModifiers`
     */
   case class TwirlSemanticToken(
-    deltaLine     : Int,
-    deltaStart    : Int,
-    length        : Int,
-    tokenType     : Int,
+    deltaLine: Int,
+    deltaStart: Int,
+    length: Int,
+    tokenType: Int,
     tokenModifiers: Int,
   ) {
     def toList: List[Int] = List(deltaLine, deltaStart, length, tokenType, tokenModifiers)
@@ -111,24 +111,22 @@ class Traverser {
         column = curr.column - prev.column,
       )
 
-    /** I tried to get this into its own function or suchlike, but I was unable to, since in
-      * order to extract the `pos`, I need to extract the types using the pattern matching
-      * extractors.
+    /** I tried to get this into its own function or suchlike, but I was unable to, since in order
+      * to extract the `pos`, I need to extract the types using the pattern matching extractors.
       *
       * Maybe I could do something like this by just manually supplying the `pos` attrs as a
-      * property in the function, but I have not tried this yet in the spike here. Actually now
-      * that I think about it, if I manually make things that rely on `pos` and then have them
-      * passed to a function, then it's only really going to have one line in the resulting
-      * function which I'm not sure about the value of having a function for something.... that
-      * small. (i.e. just making a case class)
+      * property in the function, but I have not tried this yet in the spike here. Actually now that
+      * I think about it, if I manually make things that rely on `pos` and then have them passed to
+      * a function, then it's only really going to have one line in the resulting function which I'm
+      * not sure about the value of having a function for something.... that small. (i.e. just
+      * making a case class)
       *
-      * The @ symbol makes it so that the whole object/class is extracted from the pattern
-      * match, as opposed to just the string (since we need to get access to its other
-      * attrs/props).
+      * The @ symbol makes it so that the whole object/class is extracted from the pattern match, as
+      * opposed to just the string (since we need to get access to its other attrs/props).
       *
-      * Also not sure as to how I'm going to be able to map over the list and keep doing it
-      * "over" the previous item if you get me. I'm sure that something like `fold` or something
-      * will be able to accommodate this.
+      * Also not sure as to how I'm going to be able to map over the list and keep doing it "over"
+      * the previous item if you get me. I'm sure that something like `fold` or something will be
+      * able to accommodate this.
       */
 
     node match {

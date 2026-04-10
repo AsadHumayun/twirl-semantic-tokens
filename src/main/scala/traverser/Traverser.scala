@@ -18,12 +18,12 @@ class Traverser {
 
   private object Paths {
 
-    val successCase = Util
+    val successCase: Path = Util
       .getBaseDirectory
       .resolve("out")
       .resolve("TwirlSuccessCase.txt")
 
-    val errorCase = Util
+    val errorCase: Path = Util
       .getBaseDirectory
       .resolve("out")
       .resolve("TwirlErrorCase.txt")
@@ -50,8 +50,8 @@ class Traverser {
   /** The idea is that this class will hold the state for the recursive logic when it comes to
     * "jumping" between the ASTs.
     *
-    * @param prevPos
-    *   The previous `Position`
+    * @param prevToken
+    *   The previous `TwirlSemanticToken`
     * @param tokens
     *   All of the collected semantic tokens thus far
     */
@@ -117,7 +117,7 @@ class Traverser {
       *
       * Maybe I could do something like this by just manually supplying the `pos` attrs as a
       * property in the function, but I have not tried this yet in the spike here. Actually now
-      * that I think abuot it, if I manually make things that rely on `pos` and then have them
+      * that I think about it, if I manually make things that rely on `pos` and then have them
       * passed to a function, then it's only really going to have one line in the resulting
       * function which I'm not sure about the value of having a function for something.... that
       * small. (i.e. just making a case class)

@@ -51,8 +51,6 @@ object Emitter {
     state: State,
     pos: Position,
     str: String,
-    tokenType: String,
-    tokenModifier: String,
   ): State = {
     println(s"HTML emitted: [$str].")
     resolveTokens(
@@ -66,8 +64,6 @@ object Emitter {
     state: State,
     pos: Position,
     str: String,
-    tokenType: String,
-    tokenModifier: String,
   ): State = {
     println(s"Scala emitted: [$str].")
     resolveTokens(
@@ -81,8 +77,6 @@ object Emitter {
     state: State,
     pos: Position,
     str: String,
-    tokenType: String,
-    tokenModifier: String,
   ): State = 
     resolveTokens(
       state, pos, str,
@@ -102,12 +96,7 @@ object Emitter {
     state: State,
     pos: Position,
     str: String,
-  ): State = 
-    emitScala(
-      state, pos, str,
-      tokenType = SemanticTokenTypes.Namespace,
-      tokenModifier = SemanticTokenModifiers.Readonly,
-    )
+  ): State = emitScala(state, pos, str)
 
   /**
     * This is the details that are provided in the `@this(...)` expression in Twirl.

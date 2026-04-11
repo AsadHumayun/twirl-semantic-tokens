@@ -111,7 +111,7 @@ object Emitter {
     state: State,
     pos: Position,
     str: String,
-  ): State = 
+  ): State =
     resolveTokens(
       state, pos, str,
       tokenType = SemanticTokenTypes.Comment,
@@ -126,8 +126,9 @@ object Emitter {
     pos: PosString,
     str: String,
   ): State = {
+    // Should this just be using emitScala?
     resolveTokens(
-      state, 
+      state,
       pos = Position(
         line = pos.pos.line,
         column = pos.pos.column,

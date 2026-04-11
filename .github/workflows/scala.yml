@@ -12,11 +12,10 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 jobs:
-  build:
+  scalafmt:
 
     runs-on: ubuntu-latest
 
@@ -38,9 +37,5 @@ jobs:
         sudo chmod 644 /etc/apt/trusted.gpg.d/scalasbt-release.gpg
         sudo apt-get update
         sudo apt-get install sbt
-    - name: Upload dependency graph
-      uses: scalacenter/sbt-dependency-submission@ab086b50c947c9774b70f39fc7f6e20ca2706c91
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: scalafmt (Check)
       run: sbt scalafmtCheckAll

@@ -4,13 +4,13 @@ package traverser
   * "jumping" between the ASTs.
   *
   * @param prevToken
-  *   The previous `TwirlSemanticToken`
+  *   The previous `SourceTwirlSemanticToken`
   * @param tokens
   *   All of the collected semantic tokens thus far
   */
 case class State(
-  prevToken: TwirlSemanticToken,
-  tokens: Seq[TwirlSemanticToken],
+  prevToken: SourceTwirlSemanticToken,
+  tokens: Seq[SourceTwirlSemanticToken],
 ) {
-  def getPrevPos: Position = prevToken.toPos
+  def getPrevPos: Position = prevToken.getSrcPos
 }

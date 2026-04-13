@@ -33,9 +33,9 @@ object Emitter {
       *   read LSP docs about it and make sure that it is eventually done so that you don't trip
       *   over it later and wonder why it is not working...
       */
-    val thisToken = TwirlSemanticToken(
-      deltaLine = delta.line,
-      deltaStart = delta.column,
+    val thisToken = SourceTwirlSemanticToken(
+      line = pos.line,
+      column = pos.column,
       length = str.length,
       tokenType = SemanticTokensService.types.resolve(tokenType),
       tokenModifiers = SemanticTokensService.modifiers.resolve(tokenModifier),

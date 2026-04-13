@@ -142,11 +142,81 @@ class Traverser {
 
     template match
       case BlockTemplate(imports, members, sub, nodes)                                      =>
-        val theseTokens = List()
-
-        ???
-      case SubTemplate(declaration, name, params, imports, members, sub, nodes)             => ???
-      case Template(constructor, comment, params, topImports, imports, members, sub, nodes) => ???
+        matchCommonTemplateMeta(state, imports, members, sub, nodes)
+      case SubTemplate(declaration, name, params, imports, members, sub, nodes)             =>
+        val namePos           = Position(line = name.pos.line, column = name.pos.column)
+        val declaredState     = declaration match
+          case Left(isVarOrDef) =>
+            isVarOrDef match
+              case true       => // var
+                resolveTokens(
+                  state = state,
+                  pos = namePos,
+                  str = name.str,
+                  tokenType = SemanticTokenTypes.Variable,
+                  tokenModifier = "0", // a workaround to give no token modifier
+                )
+              case _: Boolean => // def
+                resolveTokens(
+                  state = state,
+                  pos = namePos,
+                  str = name.str,
+                  tokenType = SemanticTokenTypes.Function,
+                  tokenModifier = "0",
+                )
+          case Right(isLazyVal) =>
+            isLazyVal match
+              case true       => // lazy val
+                resolveTokens(
+                  state = state,
+                  pos = namePos,
+                  str = name.str,
+                  tokenType = SemanticTokenTypes.Variable,
+                  tokenModifier = SemanticTokenModifiers.Readonly,
+                )
+              case _: Boolean => // eager val
+                resolveTokens(
+                  state = state,
+                  pos = namePos,
+                  str = name.str,
+                  tokenType = SemanticTokenTypes.Variable,
+                  tokenModifier = SemanticTokenModifiers.Definition,
+                )
+        val scalaEmittedState = emitScala(
+          state = declaredState,
+          pos = Position(
+            line = params.pos.line,
+            column = params.pos.column,
+          ),
+          str = params.str,
+        )
+        matchCommonTemplateMeta(
+          state = scalaEmittedState,
+          imports = imports,
+          members = members,
+          sub = sub,
+          nodes = nodes,
+        )
+      case Template(constructor, comment, params, topImports, imports, members, sub, nodes) =>
+        val constructorState = constructor match
+          case Some(value) =>
+            resolveTokens(
+              state = state,
+              pos = pos,
+              str = value.params.str,
+              tokenType = SemanticTokenTypes.Parameter,
+              tokenModifier = SemanticTokenModifiers.Declaration,
+            )
+          case None        => state
+        // @TODO WIP
+        resolveTokens(
+          state = state,
+          pos = pos,
+          str = ???,
+          tokenType = ???,
+          tokenModifier = ???,
+        )
+  }
 
   def matchNode(node: TemplateTree, state: State): State = {
     def traverseReassignment(state: State, ref: Either[SubTemplate, Var]): State =

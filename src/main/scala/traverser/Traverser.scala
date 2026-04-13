@@ -149,60 +149,43 @@ class Traverser {
       case Template(constructor, comment, params, topImports, imports, members, sub, nodes) => ???
 
   def matchNode(node: TemplateTree, state: State): State = {
-
-    /** The below is a pseudocode-esque function that indicates that we now have basic scala source,
-      * and can delegate the generation of tokens to existing infrastructure present in Metals. Take
-      * the tokens from there, bring them in, then spit them out in the Twirl function. This might
-      * require some restructuring on Metals' codebase when I try and add it ---- depends on what
-      * things look like on their code's side when I try and get an merge-able branch set up.
-      */
-    def fetchSemanticTokensFromMetalsLS = ???
-
     def traverseReassignment(state: State, ref: Either[SubTemplate, Var]): State =
       ref match
         case Left(template) =>
           provideSemanticTokens(template, template.content)
-        case Right(var_)    => 
+        case Right(var_)    =>
+          // Just emit everything as Scala and then let Metals provide
+          // the semantic tokens for this - I could go and do it myself
+          // but there is not really much of a point in doing that if Metals
+          // can just go ahead and do it for us anyway
           emitScala(
-            state, pos = Position(
-              line = var_.pos.line, column = var_.pos.column,
-            ), 
-            str,
+            state = state,
+            pos = Position(
+              line = var_.pos.line,
+              column = var_.pos.column,
+            ),
+            str = var_.code.toString,
           )
-
-          // emitScala(
-          //   state, Position(
-          //     line = var_.pos.line, column = var_.pos.column
-          //   ),
-          //   var_.
-          // )
-
-    def traverseScalaExp(state: State, scalaExp: ScalaExp): State =
-      ???
-    def traverseBlock(state: State, block: Block): State          = {
-      val theseTokens = List()
-      // matchTemplate on the template's meta info
-      // matchNode on the template's tree
-      ???
+    def traverseScalaExp(state: State, scalaExp: ScalaExp): State                =
+      scalaExp.parts.foldLeft(state)(traverseScalaExpPart)
+    def traverseBlock(state: State, block: Block): State                         = {
+      val tokens =
+        matchTemplate(state, block.contents, Position(block.pos.line, block.pos.column)).tokens
+      State(
+        prevToken = state.prevToken,
+        tokens,
+      )
     }
 
     def traverseScalaExpPart(state: State, part: ScalaExpPart): State =
       part match
         case simple @ Simple(code)                     =>
-          /** Hand off to the Scala Metals implementation of semantic tokens for this, capture the
-            * resultant tokens and then emit them.
-            *
-            * Not sure how to go about mimicing that kind of behaviour for this now - I think we
-            * will just manually write it as something here.
-            *
-            * @TODO
-            */
-
-          // pseudocode-like method showing what should be done here AS OPPOSED
-          // to doing what I currently am, and resolving the whole thing to a singple token.
-          fetchSemanticTokensFromMetalsLS
-        case block @ Block(whitespace, args, template) =>
-          traverseBlock(state, block)
+          emitScala(
+            state = state,
+            pos = Position(simple.pos.line, simple.pos.column),
+            str = code,
+          )
+        case block @ Block(whitespace, args, template) => traverseBlock(state, block)
 
     /** I tried to get this into its own function or suchlike, but I was unable to, since in order
       * to extract the `pos`, I need to extract the types using the pattern matching extractors.
@@ -246,7 +229,7 @@ class Traverser {
       case display @ Display(exp)       => traverseScalaExp(state, exp)
       case reassign @ Reassignment(ref) => traverseReassignment(state, ref)
       // for scalaExp, foldLeft onto it
-      case scalaExp @ ScalaExp(parts)   => ???
+      case scalaExp @ ScalaExp(parts)   => traverseScalaExp(state = state, scalaExp = scalaExp)
       case _: TemplateTree              => ???
     }
   }

@@ -17,17 +17,13 @@ object Emitter {
       column = curr.column - prev.column,
     )
 
-  private def resolveTokens(
+  def resolveTokens(
     state: State,
     pos: Position,
     str: String,
     tokenType: String,
     tokenModifier: String,
   ): State = {
-    val delta = getDeltaPos(
-      curr = pos,
-      prev = state.getPrevPos,
-    )
     /** @note
       *   there are some warnings abuot behaviour for deltaLine that I have not yet implemented ---
       *   read LSP docs about it and make sure that it is eventually done so that you don't trip
@@ -77,7 +73,7 @@ object Emitter {
     state: State,
     pos: Position,
     str: String,
-  ): State = 
+  ): State =
     resolveTokens(
       state, pos, str,
       tokenType = SemanticTokenTypes.Comment,

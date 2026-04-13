@@ -281,8 +281,6 @@ class Traverser {
           state,
           pos = Position(comment.pos.line, comment.pos.column),
           str = msg,
-          tokenType = SemanticTokenTypes.Comment,
-          tokenModifier = SemanticTokenModifiers.Documentation,
         )
       case plain @ Plain(text)          =>
         emitHtml(
@@ -293,8 +291,6 @@ class Traverser {
           ),
           str = text,
           // TODO: Hand this off to an HTML parser instead?
-          tokenType = SemanticTokenTypes.Label,
-          tokenModifier = SemanticTokenModifiers.Abstract,
         )
       case display @ Display(exp)       => traverseScalaExp(state, exp)
       case reassign @ Reassignment(ref) => traverseReassignment(state, ref)

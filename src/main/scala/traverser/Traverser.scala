@@ -1,9 +1,9 @@
 package traverser
 
-import traverser.{Position, State, TwirlSemanticToken}
+import traverser.{ Position, State, SourceTwirlSemanticToken, DeltaEncodedTwirlSemanticToken }
 import traverser.Emitter.*
 
-import org.eclipse.lsp4j.{SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensParams}
+import org.eclipse.lsp4j.{ SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensParams }
 import java.nio.file.Path
 import play.twirl.parser.TreeNodes.*
 

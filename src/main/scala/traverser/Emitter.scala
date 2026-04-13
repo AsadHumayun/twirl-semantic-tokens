@@ -90,7 +90,8 @@ object Emitter {
     * @example
     *   {{{
     * @import
-    *   java.net.URLEncoder imports=[ArrayBuffer(Simple(import java.net.URLEncoder))] }}}
+    *   java.net.URLEncoder imports=[ArrayBuffer(Simple(import java.net.URLEncoder))]
+    *   }}}
     * @note
     *   This will internally call `emitScala(...)` on the specified tokens.
     */

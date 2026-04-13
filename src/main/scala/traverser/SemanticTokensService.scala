@@ -41,18 +41,18 @@ case object SemanticTokensService {
     def resolve(searchTerm: String): Int =
       typesMap.get(searchTerm) match {
         case Some(value) => value
-        /**
-          * ========================
+
+        /** ========================
           * This could cause issues later down the line - how do I want to
           * go about handling errors like these?
           * ========================
           */
-        case None        => 0
+        case None => 0
       }
   }
 
   case object modifiers {
-    private val modifiersList = List(
+    private val modifiersList                  = List(
       "declaration",
       "definition",
       "readonly",
@@ -65,7 +65,7 @@ case object SemanticTokensService {
       "defaultLibrary",
     )
     private val modifiersMap: Map[String, Int] = modifiersList.zipWithIndex.toMap
-    def resolve(searchTerm: String): Int =
+    def resolve(searchTerm: String): Int       =
       modifiersMap.get(searchTerm) match {
         case Some(value) => value
         case None        => 0

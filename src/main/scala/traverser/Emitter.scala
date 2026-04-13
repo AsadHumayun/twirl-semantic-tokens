@@ -6,11 +6,10 @@ import play.twirl.parser.TreeNodes.PosString
 
 object Emitter {
   private def getDeltaPos(curr: Position, prev: Position): Position =
-    /**
-      * @TODO there is still some LSP delta encoding logic that is yet to be
-      * completed here; please read the LSP docs on what that particular edge
-      * case was and add something here (or whereever otherwise required) to
-      * prevent this from tripping myself up in the future.
+    /** @TODO
+      *   there is still some LSP delta encoding logic that is yet to be completed here; please read
+      *   the LSP docs on what that particular edge case was and add something here (or whereever
+      *   otherwise required) to prevent this from tripping myself up in the future.
       */
     Position(
       line = curr.line - prev.line,
@@ -24,6 +23,7 @@ object Emitter {
     tokenType: String,
     tokenModifier: String,
   ): State = {
+
     /** @note
       *   there are some warnings abuot behaviour for deltaLine that I have not yet implemented ---
       *   read LSP docs about it and make sure that it is eventually done so that you don't trip
@@ -50,7 +50,9 @@ object Emitter {
   ): State = {
     println(s"HTML emitted: [$str].")
     resolveTokens(
-      state, pos, str,
+      state,
+      pos,
+      str,
       tokenType = SemanticTokenTypes.String,
       tokenModifier = SemanticTokenModifiers.Static,
     )
@@ -63,7 +65,9 @@ object Emitter {
   ): State = {
     println(s"Scala emitted: [$str].")
     resolveTokens(
-      state, pos, str,
+      state,
+      pos,
+      str,
       tokenType = SemanticTokenTypes.Method,
       tokenModifier = SemanticTokenModifiers.Async,
     )
@@ -75,18 +79,20 @@ object Emitter {
     str: String,
   ): State =
     resolveTokens(
-      state, pos, str,
+      state,
+      pos,
+      str,
       tokenType = SemanticTokenTypes.Comment,
       tokenModifier = SemanticTokenModifiers.Documentation,
     )
 
-  /**
-    * Used for template imports.
-    * @example {{{
-    * @import java.net.URLEncoder
-    * imports=[ArrayBuffer(Simple(import java.net.URLEncoder))]
-    * }}}
-    * @note This will internally call `emitScala(...)` on the specified tokens.
+  /** Used for template imports.
+    * @example
+    *   {{{
+    * @import
+    *   java.net.URLEncoder imports=[ArrayBuffer(Simple(import java.net.URLEncoder))] }}}
+    * @note
+    *   This will internally call `emitScala(...)` on the specified tokens.
     */
   def emitImports(
     state: State,
@@ -94,34 +100,34 @@ object Emitter {
     str: String,
   ): State = emitScala(state, pos, str)
 
-  /**
-    * This is the details that are provided in the `@this(...)` expression in Twirl.
-    * @note This will internally call `emitScala(...)` on the specified tokens.
+  /** This is the details that are provided in the `@this(...)` expression in Twirl.
+    * @note
+    *   This will internally call `emitScala(...)` on the specified tokens.
     * @example
-    * {{{
+    *   {{{
     * @this(main: main)
     * constructor=[Some(Constructor(None,(main: main)))]
-    * }}}
-   */
+    *   }}}
+    */
   def emitConstructor(
     state: State,
     pos: Position,
     str: String,
   ): State =
     resolveTokens(
-      state, pos, str,
+      state,
+      pos,
+      str,
       tokenType = SemanticTokenTypes.Comment,
       tokenModifier = SemanticTokenModifiers.Documentation,
     )
 
-  /**
-    * Emits template header params.
-    */
+  /** Emits template header params. */
   def emitParams(
     state: State,
     pos: PosString,
     str: String,
-  ): State = {
+  ): State =
     // Should this just be using emitScala?
     resolveTokens(
       state,
@@ -133,5 +139,4 @@ object Emitter {
       tokenType = SemanticTokenTypes.Comment,
       tokenModifier = SemanticTokenModifiers.Documentation,
     )
-  }
 }

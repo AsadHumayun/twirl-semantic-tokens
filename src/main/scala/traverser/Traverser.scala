@@ -29,6 +29,7 @@ object Paths {
   * TS implementation of this solution.
   */
 class Traverser {
+
   /** Opens a file and extracts its contents to be parsed by `TwirlParser`.
     *
     * The resultant AST will then be traversed and SemanticTokens will be sent to the extension.

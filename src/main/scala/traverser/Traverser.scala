@@ -54,7 +54,92 @@ class Traverser {
     * @param pos
     * @return
     */
-  def matchTemplate(state: State, template: BaseTemplate, pos: Position): State =
+  def matchTemplate(state: State, template: BaseTemplate, pos: Position): State = {
+
+    /** Matches common template metadata. This applies to all templates that we might receive and
+      * therefore have to match against & process tokens for.
+      *
+      * Matches and processes `[state, imports, sub, nodes]` of a template.
+      *
+      * @param state
+      *   The state to use.
+      * @param imports
+      *   The imports that are used in this template.
+      * @param members
+      *   The members of this template.
+      * @param sub
+      *   The subtemplates of this template.
+      * @param nodes
+      *   The nodes of this tree.
+      * @return
+      *   State -- the new State for this template.
+      */
+    def matchCommonTemplateMeta(
+      state: State,
+      imports: collection.Seq[Simple],
+      members: collection.Seq[LocalMember],
+      sub: collection.Seq[SubTemplate],
+      nodes: collection.Seq[TemplateTree],
+    ): State                                                           = {
+      val importedStates   = imports.foldLeft(state) { (state, import_) =>
+        emitScala(state = state, Position(import_.pos.line, import_.pos.column), import_.code)
+      }
+      val membersState     = members.foldLeft(importedStates) { (state, member) =>
+        emitScala(
+          state = state,
+          pos = Position(
+            line = member.pos.line,
+            column = member.pos.column,
+          ),
+          str = member.code.code,
+        )
+      }
+      val subTemplateState = sub.foldLeft(membersState) { (state, sub) =>
+        matchTemplate(
+          state = state,
+          template = sub,
+          pos = Position(
+            line = sub.pos.line,
+            column = sub.pos.column,
+          ),
+        )
+      }
+      val finalState       =
+        nodes.foldLeft(subTemplateState)((state, node) => matchNode(node = node, state = state))
+
+      State(
+        prevToken = finalState.prevToken,
+        tokens = finalState.tokens,
+      )
+    }
+    /*for testing, remove later*/
+    val params                                                         =
+      """
+        |@this(
+        |  // a comment
+        |  someParam: T,
+        |  @* a comment *@
+        |  s: D[T],
+        |  /* idk some comment */
+        |)
+        |""".stripMargin
+      /*end testing region*/
+    def getCommentNodes(text: String): (Position, String) | EmptyTuple = {
+      val sources: (Position, String) | EmptyTuple = Tuple()
+      var pos                                      = 0
+      while (pos < text.length) {
+        val substr = text.substring(pos)
+        if (text.startsWith("//", pos)) {
+          // "//" will leave the rest of the line as a comment, so we can skip
+          // to the end of the line here.
+          val endIndex = text.indexOf("\n", pos + 2)
+          if (endIndex == -1) pos = text.length()
+        } else {}
+      }
+
+      sources
+    }
+
     template match
       case BlockTemplate(imports, members, sub, nodes)                                      =>
         val theseTokens = List()

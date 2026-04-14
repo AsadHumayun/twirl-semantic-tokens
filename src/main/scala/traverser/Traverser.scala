@@ -80,7 +80,7 @@ class Traverser {
       members: collection.Seq[LocalMember],
       sub: collection.Seq[SubTemplate],
       nodes: collection.Seq[TemplateTree],
-    ): State                                                           = {
+    ): State = {
       val importedStates   = imports.foldLeft(state) { (state, import_) =>
         emitScala(state = state, Position(import_.pos.line, import_.pos.column), import_.code)
       }
@@ -112,32 +112,138 @@ class Traverser {
         tokens = finalState.tokens,
       )
     }
-    /*for testing, remove later*/
-    val params                                                         =
-      """
-        |@this(
-        |  // a comment
-        |  someParam: T,
-        |  @* a comment *@
-        |  s: D[T],
-        |  /* idk some comment */
-        |)
-        |""".stripMargin
-      /*end testing region*/
-    def getCommentNodes(text: String): (Position, String) | EmptyTuple = {
-      val sources: (Position, String) | EmptyTuple = Tuple()
-      var pos                                      = 0
-      while (pos < text.length) {
-        val substr = text.substring(pos)
-        if (text.startsWith("//", pos)) {
-          // "//" will leave the rest of the line as a comment, so we can skip
-          // to the end of the line here.
-          val endIndex = text.indexOf("\n", pos + 2)
-          if (endIndex == -1) pos = text.length()
-        } else {}
+
+    /** A case class representing the data that will be stored once a comment is detected and
+      * extracted from some input `text`.
+      *
+      * @see
+      *   [[Traverser.getCommentNodes]]
+      */
+    case class CommentSrcPos(
+      pos: Position,
+      str: String,
+    ) {
+      def getToken(lineOffset: Int): SourceTwirlSemanticToken =
+        SourceTwirlSemanticToken(
+          length = this.str.length,
+          tokenType = SemanticTokensService.types.resolve(SemanticTokenTypes.Comment),
+          tokenModifiers = 0,
+          line = this.pos.line + lineOffset,
+          column = this.pos.column,
+        )
+    }
+    case class BeginRegionMarker(
+      pos: Position,
+      rawSrcPos: Int,
+    )
+    def getCommentNodes(text: String): List[CommentSrcPos] = {
+      enum ScannerModes {
+        case Text, BlockComment, TwirlComment, Ignore
+      }
+      var rawSrcPos                              = 0
+      var pos: Position                          = Position(0, 0)
+      var beginRegion: Option[BeginRegionMarker] = None
+      var mode: ScannerModes                     = ScannerModes.Text
+      var comments: List[CommentSrcPos]          = List()
+
+      def moveCursorForwardByOne(): Unit = {
+        rawSrcPos = rawSrcPos + 1
+        pos = Position(
+          line = pos.line,
+          column = pos.column + 1,
+        )
       }
 
-      sources
+      while (rawSrcPos < text.length)
+        val char = text.charAt(rawSrcPos).toLower.toString
+        char match
+          case x if x == "\n" =>
+            // newline, increment pos.line and set pos.col to 0
+            pos = Position(
+              line = pos.line + 1,
+              column = 0,
+            )
+        mode match
+          case ScannerModes.Text         =>
+            char match
+              // received normal text; continue matching until start of
+              // either a line comment, block comment, or twirl comment
+              case x if x == "/" => // start with block comment
+                text.charAt(rawSrcPos + 1).toLower.toString match
+                  case y if y == "*" =>
+                    // We are now inside a block comment.
+                    beginRegion = Some(BeginRegionMarker(pos = pos, rawSrcPos = rawSrcPos))
+                    mode = ScannerModes.BlockComment
+                    moveCursorForwardByOne()
+                  case _: String     => moveCursorForwardByOne()
+              case x if x == "@" => // check if we are in an @* comment block... and set mode.
+                text.charAt(rawSrcPos + 1).toLower.toString match
+                  case y if y == "*" =>
+                    // We are now inside a twirl block comment.
+                    beginRegion = Some(BeginRegionMarker(pos = pos, rawSrcPos = rawSrcPos))
+                    mode = ScannerModes.TwirlComment
+                    moveCursorForwardByOne()
+                  case _: String     => moveCursorForwardByOne()
+              case x if x == "/" => // check if we are in a single line block
+                text.charAt(rawSrcPos + 1).toLower.toString match
+                  case y if y == "/" =>
+                    // We are now inside a // line comment
+                    beginRegion = None
+                    mode = ScannerModes.Text
+                    val endIndex = text.indexOf("\n", rawSrcPos + 2)
+                    endIndex match
+                      case x if x == -1 =>
+                        // end of block comment extends until end of text, consume whole text.
+                        comments = comments.appended(
+                          CommentSrcPos(
+                            pos = pos,
+                            str = text.substring(rawSrcPos, text.length),
+                          )
+                        )
+                        rawSrcPos = text.length
+                      case _: Int       =>
+                        comments = comments.appended(
+                          CommentSrcPos(
+                            pos = pos,
+                            str = text.substring(rawSrcPos, endIndex),
+                          )
+                        )
+                        rawSrcPos = endIndex + 1
+                  case _: String     => moveCursorForwardByOne()
+              case _: String     => moveCursorForwardByOne()
+          case ScannerModes.TwirlComment =>
+            text.charAt(rawSrcPos).toLower.toString match
+              case x if x == "*" =>
+                text.charAt(rawSrcPos + 1).toLower.toString match
+                  case y if y == "@" =>
+                    beginRegion = None
+                    mode = ScannerModes.Text
+                    comments = comments.appended(
+                      CommentSrcPos(
+                        pos = beginRegion.get.pos,
+                        str = text.substring(beginRegion.get.rawSrcPos, rawSrcPos + 2),
+                      )
+                    )
+                  case _: String     => moveCursorForwardByOne()
+              case _: String     => moveCursorForwardByOne()
+          case ScannerModes.BlockComment =>
+            text.charAt(rawSrcPos).toLower.toString match
+              case x if x == "*" =>
+                text.charAt(rawSrcPos + 1).toLower.toString match
+                  case y if y == "/" =>
+                    beginRegion = None
+                    mode = ScannerModes.Text
+                    comments = comments.appended(
+                      CommentSrcPos(
+                        pos = beginRegion.get.pos,
+                        str = text.substring(beginRegion.get.rawSrcPos, rawSrcPos + 2),
+                      )
+                    )
+                  case _: String     => moveCursorForwardByOne()
+              case _: String     => moveCursorForwardByOne()
+          case ScannerModes.Ignore       => moveCursorForwardByOne()
+
+      comments
     }
 
     template match

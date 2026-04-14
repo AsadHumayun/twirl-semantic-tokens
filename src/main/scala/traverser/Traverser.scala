@@ -141,7 +141,7 @@ class Traverser {
         case Text, BlockComment, TwirlComment, Ignore
       }
       var rawSrcPos                              = 0
-      var pos: Position                          = Position(0, 0)
+      var pos: Position                          = Position(1, 0)
       var beginRegion: Option[BeginRegionMarker] = None
       var mode: ScannerModes                     = ScannerModes.Text
       var comments: List[CommentSrcPos]          = List()
@@ -163,6 +163,8 @@ class Traverser {
               line = pos.line + 1,
               column = 0,
             )
+          case _: String      => Nil
+
         mode match
           case ScannerModes.Text         =>
             char match
@@ -175,17 +177,6 @@ class Traverser {
                     beginRegion = Some(BeginRegionMarker(pos = pos, rawSrcPos = rawSrcPos))
                     mode = ScannerModes.BlockComment
                     moveCursorForwardByOne()
-                  case _: String     => moveCursorForwardByOne()
-              case x if x == "@" => // check if we are in an @* comment block... and set mode.
-                text.charAt(rawSrcPos + 1).toLower.toString match
-                  case y if y == "*" =>
-                    // We are now inside a twirl block comment.
-                    beginRegion = Some(BeginRegionMarker(pos = pos, rawSrcPos = rawSrcPos))
-                    mode = ScannerModes.TwirlComment
-                    moveCursorForwardByOne()
-                  case _: String     => moveCursorForwardByOne()
-              case x if x == "/" => // check if we are in a single line block
-                text.charAt(rawSrcPos + 1).toLower.toString match
                   case y if y == "/" =>
                     // We are now inside a // line comment
                     beginRegion = None
@@ -210,13 +201,20 @@ class Traverser {
                         )
                         rawSrcPos = endIndex + 1
                   case _: String     => moveCursorForwardByOne()
+              case x if x == "@" => // check if we are in an @* comment block... and set mode.
+                text.charAt(rawSrcPos + 1).toLower.toString match
+                  case y if y == "*" =>
+                    // We are now inside a twirl block comment.
+                    beginRegion = Some(BeginRegionMarker(pos = pos, rawSrcPos = rawSrcPos))
+                    mode = ScannerModes.TwirlComment
+                    moveCursorForwardByOne()
+                  case _: String     => moveCursorForwardByOne()
               case _: String     => moveCursorForwardByOne()
           case ScannerModes.TwirlComment =>
             text.charAt(rawSrcPos).toLower.toString match
               case x if x == "*" =>
                 text.charAt(rawSrcPos + 1).toLower.toString match
                   case y if y == "@" =>
-                    beginRegion = None
                     mode = ScannerModes.Text
                     comments = comments.appended(
                       CommentSrcPos(
@@ -224,6 +222,7 @@ class Traverser {
                         str = text.substring(beginRegion.get.rawSrcPos, rawSrcPos + 2),
                       )
                     )
+                    beginRegion = None
                   case _: String     => moveCursorForwardByOne()
               case _: String     => moveCursorForwardByOne()
           case ScannerModes.BlockComment =>
@@ -231,7 +230,6 @@ class Traverser {
               case x if x == "*" =>
                 text.charAt(rawSrcPos + 1).toLower.toString match
                   case y if y == "/" =>
-                    beginRegion = None
                     mode = ScannerModes.Text
                     comments = comments.appended(
                       CommentSrcPos(
@@ -239,6 +237,7 @@ class Traverser {
                         str = text.substring(beginRegion.get.rawSrcPos, rawSrcPos + 2),
                       )
                     )
+                    beginRegion = None
                   case _: String     => moveCursorForwardByOne()
               case _: String     => moveCursorForwardByOne()
           case ScannerModes.Ignore       => moveCursorForwardByOne()

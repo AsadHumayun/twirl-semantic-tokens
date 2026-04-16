@@ -345,7 +345,13 @@ class Traverser {
           )
         }
 
-        matchCommonTemplateMeta(state = topImportsStates, imports = imports, members = members, sub = sub, nodes = nodes)
+        matchCommonTemplateMeta(
+          state = topImportsStates,
+          imports = imports,
+          members = members,
+          sub = sub,
+          nodes = nodes,
+        )
   }
 
   def matchNode(node: TemplateTree, state: State): State = {

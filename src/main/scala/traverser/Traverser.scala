@@ -123,6 +123,13 @@ class Traverser {
       pos: Position,
       str: String,
     ) {
+
+      /** @TODO:
+        *   Figure out as to whether this actually works...
+        *
+        * @param lineOffset
+        * @return
+        */
       def getToken(lineOffset: Int): SourceTwirlSemanticToken =
         SourceTwirlSemanticToken(
           length = this.str.length,
@@ -313,21 +320,43 @@ class Traverser {
               tokenModifier = SemanticTokenModifiers.Declaration,
             )
           case None        => state
-        // @TODO WIP
-        resolveTokens(
-          state = state,
-          pos = pos,
-          str = ???,
-          tokenType = ???,
-          tokenModifier = ???,
+        val commentState     = comment match
+          case Some(value) =>
+            resolveTokens(
+              state = constructorState,
+              pos = Position(line = value.pos.line, column = value.pos.column),
+              str = value.msg,
+              tokenType = SemanticTokenTypes.Comment,
+              tokenModifier = SemanticTokenModifiers.Documentation,
+            )
+          case None        => constructorState
+        val paramsState      = emitScala(
+          state = commentState,
+          pos = Position(line = params.pos.line, column = params.pos.column),
+          str = params.str,
         )
+        val topImportsStates = topImports.foldLeft(state) { (state__, top) =>
+          resolveTokens(
+            state = state__,
+            pos = Position(line = top.pos.line, column = top.pos.column),
+            str = top.code,
+            tokenType = SemanticTokenTypes.Namespace,
+            tokenModifier = SemanticTokenModifiers.Modification,
+          )
+        }
+
+        matchCommonTemplateMeta(state = topImportsStates, imports = imports, members = members, sub = sub, nodes = nodes)
   }
 
   def matchNode(node: TemplateTree, state: State): State = {
     def traverseReassignment(state: State, ref: Either[SubTemplate, Var]): State =
       ref match
         case Left(template) =>
-          provideSemanticTokens(template, template.content)
+          matchTemplate(
+            state = state,
+            template = template,
+            pos = Position(line = template.pos.line, column = template.pos.column),
+          )
         case Right(var_)    =>
           // Just emit everything as Scala and then let Metals provide
           // the semantic tokens for this - I could go and do it myself
@@ -409,7 +438,7 @@ class Traverser {
     *
     * Use foldLeft for the folding
     */
-  def provideSemanticTokens(template: BaseTemplate, nodes: scala.collection.Seq[TemplateTree]) =
+  def provideSemanticTokens(template: Template, nodes: scala.collection.Seq[TemplateTree]) =
     // note to self: also needs to call matchTemplate on this template...
     // also initialise state? no this should be done before this and state passed in
     ???

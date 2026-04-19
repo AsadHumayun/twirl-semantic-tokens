@@ -17,6 +17,11 @@ object Paths {
     .getBaseDirectory
     .resolve("out")
     .resolve("TwirlErrorCase.txt")
+
+  val tokensOut: Path = Util
+    .getBaseDirectory
+    .resolve("out")
+    .resolve("TwirlTokens.txt")
 }
 
 /** @author
@@ -139,11 +144,11 @@ class Traverser {
           column = this.pos.column,
         )
     }
-    case class BeginRegionMarker(
-      pos: Position,
-      rawSrcPos: Int,
-    )
     def getCommentNodes(text: String): List[CommentSrcPos] = {
+      case class BeginRegionMarker(
+        pos: Position,
+        rawSrcPos: Int,
+      )
       enum ScannerModes {
         case Text, BlockComment, TwirlComment, Ignore
       }
@@ -444,10 +449,27 @@ class Traverser {
     *
     * Use foldLeft for the folding
     */
-  def provideSemanticTokens(template: Template, nodes: scala.collection.Seq[TemplateTree]) =
-    // note to self: also needs to call matchTemplate on this template...
-    // also initialise state? no this should be done before this and state passed in
-    ???
+  def provideSemanticTokens(template: Template) = {
+    val nodes  = template.content
+    val tokens = matchTemplate(
+      state = State(prevToken = SourceTwirlSemanticToken(0, 0, 0, 0, 0), tokens = Seq()),
+      template = template,
+      pos = Position(1, 0),
+    ).tokens
+      .sortBy(token => (token.line, token.column))
+      .foldLeft(List(DeltaEncodedTwirlSemanticToken(0, 0, 0, 0, 0))) { (prev, curr) =>
+        prev.appended(curr.deltaEncode(prev.last))
+      }
+
+    Util.writeFile(
+      Paths.tokensOut.toString,
+      content = tokens.map(token => s"[${token.toList.mkString(", ")}]").mkString("\n"),
+    )
+
+    println(
+      // s"Collected state: [$state]"
+    )
+  }
 
   def getTwirlTemplateSemanticTokens(params: SemanticTokensParams) = {
     import play.twirl.parser.{ TreeNodes, TwirlParser }
@@ -500,7 +522,7 @@ class Traverser {
 
     parser.parse(content) match {
       case Success(template, input)       =>
-        // provideSemanticTokens(template, template.content)
+        provideSemanticTokens(template)
         TwirlOutput(template, input, Option.empty).write(Paths.successCase.toString)
       case Error(template, input, errors) =>
         println(s"[getTwirl] Errors parsing template")

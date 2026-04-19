@@ -25,7 +25,19 @@ case class SourceTwirlSemanticToken(
   column: Int,
 ) {
   def getSrcPos: Position = Position(line = line, column = column)
-  def encode(deltaLine: Int, deltaStart: Int): DeltaEncodedTwirlSemanticToken =
+
+  def deltaEncode(prevToken: DeltaEncodedTwirlSemanticToken): DeltaEncodedTwirlSemanticToken = {
+    println(s"deltaLine=[${prevToken.deltaLine}];deltaStart=[${prevToken.deltaStart}]")
+
+    val deltaLine = line - prevToken.deltaLine
+
+    // relative to 0 or the previous token’s start if they are on the same line
+    val deltaStart =
+      if (deltaLine == 0)
+        column - prevToken.deltaStart
+      else
+        column
+
     DeltaEncodedTwirlSemanticToken(
       deltaLine = deltaLine,
       deltaStart = deltaStart,
@@ -33,14 +45,15 @@ case class SourceTwirlSemanticToken(
       tokenType = tokenType,
       tokenModifier = tokenModifiers,
     )
+  }
 }
 
 /** A case class designed to make it easier to make it easier to construct and convert semantic
   * tokens to/from their raw representation that is expected by LSP.
   *
   * @note
-  *   **THIS CLASS SHOULD NOT BE INSTANTIATED DIRECTLY.** The `encode(...)` method should be used to
-  *   convert a `SourceTwirlSemanticTokens` to a `DeltaEncodedTwirlSemanticTokens`.
+  *   **THIS CLASS SHOULD NOT BE INSTANTIATED DIRECTLY.** The `encodeDelta(...)` method should be
+  *   used to convert a `SourceTwirlSemanticTokens` to a `DeltaEncodedTwirlSemanticTokens`.
   *
   * @param deltaLine
   *   token line number, relative to the start of the previous token

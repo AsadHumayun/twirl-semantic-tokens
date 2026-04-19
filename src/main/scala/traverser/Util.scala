@@ -14,7 +14,7 @@ object Util {
     */
   def writeFile(path: String, content: String) = {
     println(s"[writFile] Attempting to write file [$path]")
-    Files.write(Paths.get(path), (content + "\n\r").getBytes(StandardCharsets.UTF_8))
+    Files.write(Paths.get(path), (content + "\n").getBytes(StandardCharsets.UTF_8))
   }
 
   /** Returns the base directory for this project (`user.dir`) */

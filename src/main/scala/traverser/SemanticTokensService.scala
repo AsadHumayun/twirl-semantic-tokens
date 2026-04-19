@@ -22,18 +22,18 @@ case object SemanticTokensService {
       "property",
       "enumMember",
       "event",
-      "function",
+      "function", // 12
       "method",
       "macro",
       "keyword",
       "modifier",
-      "comment",
+      "comment", // 17
       "string",
       "number",
-      "regexp",
+      "regexp", // 20
       "operator",
       "decorator",
-      "label",
+      "label", // 23
     )
 
     private val typesMap: Map[String, Int] = typesList.zipWithIndex.toMap

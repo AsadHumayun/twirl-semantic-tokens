@@ -109,13 +109,8 @@ class Traverser {
           ),
         )
       }
-      val finalState       =
-        nodes.foldLeft(subTemplateState)((state, node) => matchNode(node = node, state = state))
 
-      State(
-        prevToken = finalState.prevToken,
-        tokens = finalState.tokens,
-      )
+      nodes.foldLeft(subTemplateState)((state, node) => matchNode(node = node, state = state))
     }
 
     /** A case class representing the data that will be stored once a comment is detected and

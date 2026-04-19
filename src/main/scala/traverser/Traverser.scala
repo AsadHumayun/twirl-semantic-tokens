@@ -130,11 +130,12 @@ class Traverser {
         * @param lineOffset
         * @return
         */
-      def getToken(lineOffset: Int): SourceTwirlSemanticToken =
+      def getSourceToken(lineOffset: Int): SourceTwirlSemanticToken =
         SourceTwirlSemanticToken(
           length = this.str.length,
           tokenType = SemanticTokensService.types.resolve(SemanticTokenTypes.Comment),
-          tokenModifiers = 0,
+          tokenModifiers =
+            SemanticTokensService.modifiers.resolve(SemanticTokenModifiers.Documentation),
           line = this.pos.line + lineOffset,
           column = this.pos.column,
         )
@@ -256,8 +257,8 @@ class Traverser {
       case BlockTemplate(imports, members, sub, nodes)                                      =>
         matchCommonTemplateMeta(state, imports, members, sub, nodes)
       case SubTemplate(declaration, name, params, imports, members, sub, nodes)             =>
-        val namePos           = Position(line = name.pos.line, column = name.pos.column)
-        val declaredState     = declaration match
+        val namePos            = Position(line = name.pos.line, column = name.pos.column)
+        val declaredState      = declaration match
           case Left(isVarOrDef) =>
             isVarOrDef match
               case true       => // var

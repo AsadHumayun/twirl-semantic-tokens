@@ -344,9 +344,34 @@ class Traverser {
             tokenModifier = SemanticTokenModifiers.Modification,
           )
         }
+        val constructorEmittedState = constructor match
+          case Some(constructor) =>
+            println(s"CONSTRUCTOR STR=[${constructor.params.str}]")
+
+            val paramsText   = constructor.params.str
+            val commentNodes = getCommentNodes(paramsText).map { comment =>
+              println(s"[commentNodes#map]: Detected comment [${comment.str}] inside constructor.")
+              comment.getSourceToken(topImportsStates.prevToken.line)
+            }
+
+            State(
+              prevToken = SourceTwirlSemanticToken(
+                length = params.str.length,
+                tokenType = SemanticTokensService.types.resolve(SemanticTokenTypes.Parameter),
+                tokenModifiers = 0,
+                line = params.pos.line,
+                column = params.pos.column,
+              ),
+              tokens = topImportsStates.tokens ++ commentNodes,
+            )
+
+            // constructor.comment match
+            // case Some(value) => ???
+            // case None => ???
+          case None => topImportsStates
 
         matchCommonTemplateMeta(
-          state = topImportsStates,
+          state = constructorEmittedState,
           imports = imports,
           members = members,
           sub = sub,
